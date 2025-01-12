@@ -17,6 +17,7 @@
   <div id="progress">
     <h3>Progress</h3>
     <textarea id="progressOutput" style="width: 100%; height: 300px;" readonly></textarea>
+    <div id="zipLink"></div> <!-- Placeholder for ZIP file link -->
   </div>
 
   <script>
@@ -25,8 +26,22 @@
     eventSource.onmessage = function (event) {
       const data = JSON.parse(event.data);
       const output = document.getElementById('progressOutput');
-      output.value += data.message + "\n"; // Append new messages
-      output.scrollTop = output.scrollHeight; // Scroll to the latest message
+
+      if (data.type === 'progress') {
+        // Append progress updates to the textarea
+        output.value += data.message + "\n";
+        output.scrollTop = output.scrollHeight; // Scroll to the latest message
+      }
+
+      if (data.type === 'zip-created') {
+        // Add ZIP file link
+        const zipLink = document.getElementById('zipLink');
+        zipLink.innerHTML = `
+          <p>ZIP file created: 
+            <a href="${data.zipUrl}" target="_blank">Download ZIP</a>
+          </p>
+        `;
+      }
     };
 
     eventSource.onerror = function () {

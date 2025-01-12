@@ -84,30 +84,30 @@ const fs = require('fs');
 //   });
 // });
 
-// SSE endpoint for real-time updates
+const connections = []; // Store active SSE connections
+
+// SSE endpoint for progress updates
 app.get('/progress', (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
-
-  // Keep the connection open
   res.flushHeaders();
 
-  let interval = setInterval(() => {
-    res.write(`:\n\n`); // Keep-alive ping
-  }, 15000);
+  // Add connection to active connections list
+  connections.push(res);
 
+  // Remove connection on client disconnect
   req.on('close', () => {
-    clearInterval(interval); // Stop keep-alive when connection closes
+    const index = connections.indexOf(res);
+    if (index !== -1) connections.splice(index, 1);
   });
-
-  // Function to send data
-  const sendMessage = (message) => {
-    res.write(`data: ${JSON.stringify({ message })}\n\n`);
-  };
-
-  req.app.set('sendProgress', sendMessage); // Store in app for the other route to use
 });
+
+// Utility function to broadcast progress
+const broadcastProgress = (data) => {
+  const message = `data: ${JSON.stringify(data)}\n\n`;
+  connections.forEach((res) => res.write(message));
+};
 
 // Main route to handle downloads
 app.post('/send_url', (req, res) => {
@@ -118,46 +118,53 @@ app.post('/send_url', (req, res) => {
     return;
   }
 
-  const sendProgress = req.app.get('sendProgress');
-  const command = `yt-dlp "${videoUrl}" -o "./public/downloads/%(title)s.%(ext)s"`;
+  broadcastProgress({ type: 'progress', message: 'Download started...' });
 
+  const command = `yt-dlp "${videoUrl}" -o "./public/downloads/%(title)s.%(ext)s"`;
   const process = exec(command);
 
   let downloadedFiles = [];
 
   process.stdout.on('data', (data) => {
-    console.log(data);
-    if (sendProgress) sendProgress(data);
+    broadcastProgress({ type: 'progress', message: data.trim() });
+    console.log("data start!", data, "data end!");
+    
+    const regex = /Destination:\s*(.*)/;
 
-    // Extract file paths
-    const match = data.match(/Destination: (.+)$/);
+    // Extract the file path
+    const match = data.match(regex);
+    
     if (match) {
+      // Trim any unwanted spaces and add to downloadedFiles array
       downloadedFiles.push(match[1].trim());
+      console.log("FOUNd!", downloadedFiles);
     }
+
   });
 
   process.stderr.on('data', (data) => {
     console.error(data);
-    if (sendProgress) sendProgress(data);
+    broadcastProgress({ type: 'progress', message: data.trim() });
   });
 
   process.on('close', (code) => {
     console.log(`yt-dlp exited with code ${code}`);
-    if (sendProgress) sendProgress(`Download process completed with code ${code}`);
+    broadcastProgress({ type: 'progress', message: `Download process completed with code ${code}` });
 
-    // Create ZIP file with all downloaded files
     const zipFilePath = './public/downloads/downloaded_files.zip';
     const output = fs.createWriteStream(zipFilePath);
     const archive = archiver('zip', { zlib: { level: 9 } });
 
     output.on('close', () => {
       console.log(`ZIP file created: ${zipFilePath}`);
-      if (sendProgress) sendProgress(`ZIP file created: <a href="/downloads/downloaded_files.zip">Download ZIP</a>`);
+      broadcastProgress({ type: 'zip-created', zipUrl: '/downloads/downloaded_files.zip' });
     });
 
     archive.on('error', (err) => {
-      if (sendProgress) sendProgress(`Error creating ZIP: ${err.message}`);
+      broadcastProgress({ type: 'progress', message: `Error creating ZIP: ${err.message}` });
     });
+
+    console.log(downloadedFiles);
 
     downloadedFiles.forEach((file) => {
       archive.file(file, { name: path.basename(file) });
