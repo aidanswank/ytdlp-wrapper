@@ -1,61 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>dlanything</title>
-  <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>dlanything</title>
+	<script src="https://unpkg.com/htmx.org@1.9.6"></script>
 </head>
+
 <body>
-  <form hx-post="/send_url" hx-target="#response">
-    <label for="url">URL</label>
-    <input type="text" id="url" name="url" required>
 
-	<label for="format">Format</label>
-	<select id="format" name="format">
-		<option value="video">Video</option>
-		<option value="wav">Audio (WAV)</option>
-		<option value="mp3">Audio (MP3)</option>
-	</select>
+	<form id="downloadForm">
+		<label for="url">URL</label>
+		<input type="text" id="url" name="url" required>
+	
+		<label for="format">Format</label>
+		<select id="format" name="format">
+		  <option value="video">Video</option>
+		  <option value="wav">Audio (WAV)</option>
+		  <option value="mp3">Audio (MP3)</option>
+		</select>
+	
+		<button type="submit">Download</button>
+	</form>
+	<textarea id="logs" rows="10" cols="80" readonly></textarea>
+	<script src="/socket.io/socket.io.js"></script>
+	<script src="client.js"></script>
 
-    <button type="submit">Download</button>
-  </form>
-  
-  <div id="response"></div>
-  <div id="progress">
-    <h3>Progress</h3>
-    <textarea id="progressOutput" style="width: 100%; height: 300px;" readonly></textarea>
-    <div id="zipLink"></div> <!-- Placeholder for ZIP file link -->
-  </div>
-
-  <script>
-    // Listen for SSE updates
-    const eventSource = new EventSource('/progress');
-    eventSource.onmessage = function (event) {
-      const data = JSON.parse(event.data);
-      const output = document.getElementById('progressOutput');
-
-      if (data.type === 'progress') {
-        // Append progress updates to the textarea
-        output.value += data.message + "\n";
-        output.scrollTop = output.scrollHeight; // Scroll to the latest message
-      }
-
-      if (data.type === 'zip-created') {
-        // Add ZIP file link
-        const zipLink = document.getElementById('zipLink');
-        zipLink.innerHTML = `
-          <p>ZIP file created: 
-            <a href="${data.zipUrl}" target="_blank">Download ZIP</a><br>File will be deleted in 5 minutes ${data.zipUrl}
-          </p>
-        `;
-      }
-    };
-
-    eventSource.onerror = function () {
-      console.error("SSE connection lost. Refresh the page.");
-      eventSource.close();
-    };
-  </script>
-</body>
 </html>
