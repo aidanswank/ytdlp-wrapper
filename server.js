@@ -78,6 +78,8 @@ app.post('/send_url', (req, res) => {
 
   let downloadedFiles = [];
 
+  const deleteBufferTime = 5 * 60 * 1000;
+
   process.stdout.on('data', (data) => {
     broadcastProgress({ type: 'progress', message: data.trim() });
     console.log("data start!", data, "data end!");
@@ -109,7 +111,7 @@ app.post('/send_url', (req, res) => {
             console.log(`file deleted: ${file}`);
           }
         });
-      }, 1 * 60 * 1000); // 5 minutes in milliseconds
+      }, deleteBufferTime); // 5 minutes in milliseconds
     });
 
   });
@@ -143,7 +145,7 @@ app.post('/send_url', (req, res) => {
             console.log(`ZIP file deleted: ${zipFilePath}`);
           }
         });
-      }, 1 * 60 * 1000); // 5 minutes in milliseconds
+      }, deleteBufferTime); // 5 minutes in milliseconds
     });
   
     archive.on('error', (err) => {
