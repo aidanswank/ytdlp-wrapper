@@ -20,69 +20,6 @@ const archiver = require('archiver');
 const path = require('path');
 const fs = require('fs');
 
-// app.post('/send_url', (req, res) => {
-//   const videoUrl = req.body.url;
-
-//   console.log("Received URL:", videoUrl);
-
-//   if (!videoUrl) {
-//     res.status(400).send("URL is required!");
-//     return;
-//   }
-
-//   // Call yt-dlp using child_process
-//   const command = `yt-dlp "${videoUrl}" -o "./public/downloads/%(title)s.%(ext)s"`;
-
-//   exec(command, (error, stdout, stderr) => {
-//     if (error) {
-//       console.error(`Error executing yt-dlp: ${error.message}`);
-//       console.error(`stderr: ${stderr}`);
-//       res.status(500).send("Failed to download video. Check server logs.");
-//       return;
-//     }
-
-//     console.log(`yt-dlp stdout: ${stdout}`);
-//     console.log(`yt-dlp stderr: ${stderr}`);
-
-//     // Extract the file paths from stdout
-//     const filePaths = [];
-//     stdout.split('\n').forEach(line => {
-//       const match = line.match(/Destination: (.+)$/);
-//       if (match) {
-//         const filePath = match[1].trim();
-//         filePaths.push(filePath);
-//       }
-//     });
-
-//     // Create a ZIP file with all downloaded files
-//     const zipFilePath = './public/downloads/downloaded_files.zip';
-//     const output = fs.createWriteStream(zipFilePath);
-//     const archive = archiver('zip', {
-//       zlib: { level: 9 } // Set compression level
-//     });
-
-//     output.on('close', function () {
-//       console.log(`ZIP file has been finalized and the total bytes are ${archive.pointer()}`);
-//       res.send(`
-//         Video download started for URL: ${videoUrl}<br>
-//         <a href="/downloads/downloaded_files.zip" target="_blank">Download ZIP of all files</a><br>
-//         <textarea>${stdout}</textarea>
-//       `);
-//     });
-
-//     archive.on('error', function (err) {
-//       res.status(500).send("Error creating ZIP file: " + err.message);
-//     });
-
-//     // Append downloaded files to the ZIP archive
-//     filePaths.forEach(filePath => {
-//       archive.file(filePath, { name: path.basename(filePath) });
-//     });
-
-//     archive.pipe(output);
-//     archive.finalize();
-//   });
-// });
 
 const connections = []; // Store active SSE connections
 
@@ -120,7 +57,9 @@ app.post('/send_url', (req, res) => {
 
   broadcastProgress({ type: 'progress', message: 'Download started...' });
 
+  // const command = `yt-dlp --extract-audio --audio-format wav "${videoUrl}" -o "./public/downloads/%(title)s.%(ext)s"`;
   const command = `yt-dlp "${videoUrl}" -o "./public/downloads/%(title)s.%(ext)s"`;
+
   const process = exec(command);
 
   let downloadedFiles = [];
@@ -129,15 +68,20 @@ app.post('/send_url', (req, res) => {
     broadcastProgress({ type: 'progress', message: data.trim() });
     console.log("data start!", data, "data end!");
     
-    const regex = /Destination:\s*(.*)/;
+    // const regex = /Destination:\s*(.*)/;
 
     // Extract the file path
-    const match = data.match(regex);
-    
-    if (match) {
+    const destMatch = data.match(/Destination:\s*(.*)/);
+    if (destMatch) {
       // Trim any unwanted spaces and add to downloadedFiles array
-      downloadedFiles.push(match[1].trim());
+      downloadedFiles.push(destMatch[1].trim());
       console.log("FOUNd!", downloadedFiles);
+    }
+
+    const matchMerge = data.match(/"([^"]+)"/);
+    if (matchMerge) {
+      console.log("matchMerge", matchMerge[1].trim());
+      downloadedFiles.push(matchMerge[1].trim());
     }
 
   });
