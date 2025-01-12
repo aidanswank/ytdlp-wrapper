@@ -1,17 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>dlanything</title>
-    <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>dlanything</title>
+  <script src="https://unpkg.com/htmx.org@1.9.6"></script>
 </head>
 <body>
-    <form hx-post="/send_url" hx-target="#response">
-        <label for="email">url</label>
-        <input type="text" id="text" name="url" required>
-        <button type="submit">download</button>
-    </form>
-    <div id="response"></div>
+  <form hx-post="/send_url" hx-target="#response">
+    <label for="url">URL</label>
+    <input type="text" id="url" name="url" required>
+    <button type="submit">Download</button>
+  </form>
+  
+  <div id="response"></div>
+  <div id="progress">
+    <h3>Progress</h3>
+    <textarea id="progressOutput" style="width: 100%; height: 300px;" readonly></textarea>
+  </div>
+
+  <script>
+    // Listen for SSE updates
+    const eventSource = new EventSource('/progress');
+    eventSource.onmessage = function (event) {
+      const data = JSON.parse(event.data);
+      const output = document.getElementById('progressOutput');
+      output.value += data.message + "\n"; // Append new messages
+      output.scrollTop = output.scrollHeight; // Scroll to the latest message
+    };
+
+    eventSource.onerror = function () {
+      console.error("SSE connection lost. Refresh the page.");
+      eventSource.close();
+    };
+  </script>
 </body>
 </html>
