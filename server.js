@@ -50,6 +50,11 @@ const broadcastProgress = (data) => {
 // Main route to handle downloads
 app.post('/send_url', (req, res) => {
   const videoUrl = req.body.url;
+  const format = req.body.format; // Get the selected format ("video" or "wav")
+
+  console.log("Received URL:", videoUrl);
+  console.log("Selected format:", format);
+
 
   if (!videoUrl) {
     res.status(400).send("URL is required!");
@@ -59,7 +64,15 @@ app.post('/send_url', (req, res) => {
   broadcastProgress({ type: 'progress', message: 'Download started...' });
 
   // const command = `yt-dlp --extract-audio --audio-format wav "${videoUrl}" -o "./public/downloads/%(title)s.%(ext)s"`;
-  const command = `yt-dlp "${videoUrl}" -o "./public/downloads/%(title)s.%(ext)s"`;
+  var otherOptions = '';
+  if(format == 'wav') {
+    otherOptions = "--extract-audio --audio-format wav";
+  }
+  if(format == 'mp3') {
+    otherOptions = "--extract-audio --audio-format mp3";
+  }
+  const command = `yt-dlp ${otherOptions} "${videoUrl}" -o "./public/downloads/%(title)s.%(ext)s"`;
+  console.log("full command ", command);
 
   const process = exec(command);
 
@@ -86,7 +99,6 @@ app.post('/send_url', (req, res) => {
     }
 
     downloadedFiles.forEach((file) => {
-      // archive.file(file, { name: path.basename(file) });
       console.log("schedule deletes...", file);
       // Schedule deletion of the ZIP file after 5 minutes (300,000 ms)
       setTimeout(() => {

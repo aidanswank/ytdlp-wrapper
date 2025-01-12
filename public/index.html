@@ -10,6 +10,14 @@
   <form hx-post="/send_url" hx-target="#response">
     <label for="url">URL</label>
     <input type="text" id="url" name="url" required>
+
+	<label for="format">Format</label>
+	<select id="format" name="format">
+		<option value="video">Video</option>
+		<option value="wav">Audio (WAV)</option>
+		<option value="mp3">Audio (MP3)</option>
+	</select>
+
     <button type="submit">Download</button>
   </form>
   
