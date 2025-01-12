@@ -22,6 +22,7 @@ const fs = require('fs');
 
 
 const connections = []; // Store active SSE connections
+var recentFiles = [];
 
 // SSE endpoint for progress updates
 app.get('/progress', (req, res) => {
@@ -68,21 +69,36 @@ app.post('/send_url', (req, res) => {
     broadcastProgress({ type: 'progress', message: data.trim() });
     console.log("data start!", data, "data end!");
     
-    // const regex = /Destination:\s*(.*)/;
-
     // Extract the file path
     const destMatch = data.match(/Destination:\s*(.*)/);
     if (destMatch) {
       // Trim any unwanted spaces and add to downloadedFiles array
-      downloadedFiles.push(destMatch[1].trim());
-      console.log("FOUNd!", downloadedFiles);
+      var fp = destMatch[1].trim();
+      downloadedFiles.push(fp);
+      console.log("destMatch", fp);
     }
 
     const matchMerge = data.match(/"([^"]+)"/);
     if (matchMerge) {
-      console.log("matchMerge", matchMerge[1].trim());
-      downloadedFiles.push(matchMerge[1].trim());
+      var fp = matchMerge[1].trim();
+      console.log("matchMerge", fp);
+      downloadedFiles.push(fp);
     }
+
+    downloadedFiles.forEach((file) => {
+      // archive.file(file, { name: path.basename(file) });
+      console.log("schedule deletes...", file);
+      // Schedule deletion of the ZIP file after 5 minutes (300,000 ms)
+      setTimeout(() => {
+        fs.unlink(file, (err) => {
+          if (err) {
+            console.error(`Error deleting file: ${err.message}`);
+          } else {
+            console.log(`file deleted: ${file}`);
+          }
+        });
+      }, 1 * 60 * 1000); // 5 minutes in milliseconds
+    });
 
   });
 
@@ -94,26 +110,40 @@ app.post('/send_url', (req, res) => {
   process.on('close', (code) => {
     console.log(`yt-dlp exited with code ${code}`);
     broadcastProgress({ type: 'progress', message: `Download process completed with code ${code}` });
-
-    const zipFilePath = './public/downloads/downloaded_files.zip';
+  
+    // Generate a unique ZIP file name using a timestamp or random string
+    const timestamp = new Date().toISOString().replace(/[:.-]/g, "_"); // Replace invalid characters
+    const zipFilePath = `./public/downloads/downloaded_files_${timestamp}.zip`;
+  
     const output = fs.createWriteStream(zipFilePath);
     const archive = archiver('zip', { zlib: { level: 9 } });
-
+  
     output.on('close', () => {
       console.log(`ZIP file created: ${zipFilePath}`);
-      broadcastProgress({ type: 'zip-created', zipUrl: '/downloads/downloaded_files.zip' });
-    });
+      broadcastProgress({ type: 'zip-created', zipUrl: `/downloads/${path.basename(zipFilePath)}` });
 
+      // Schedule deletion of the ZIP file after 5 minutes (300,000 ms)
+      setTimeout(() => {
+        fs.unlink(zipFilePath, (err) => {
+          if (err) {
+            console.error(`Error deleting ZIP file: ${err.message}`);
+          } else {
+            console.log(`ZIP file deleted: ${zipFilePath}`);
+          }
+        });
+      }, 1 * 60 * 1000); // 5 minutes in milliseconds
+    });
+  
     archive.on('error', (err) => {
       broadcastProgress({ type: 'progress', message: `Error creating ZIP: ${err.message}` });
     });
-
+  
     console.log(downloadedFiles);
-
+  
     downloadedFiles.forEach((file) => {
       archive.file(file, { name: path.basename(file) });
     });
-
+  
     archive.pipe(output);
     archive.finalize();
   });
