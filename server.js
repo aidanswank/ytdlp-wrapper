@@ -107,9 +107,6 @@ app.post('/send_url', (req, res) => {
     return;
   }
 
-  // Array to hold file paths
-  let downloadedFiles = [];
-
   // Call yt-dlp using child_process
   const command = `yt-dlp "${videoUrl}" -o "./public/downloads/%(title)s.%(ext)s"`;
 
@@ -131,8 +128,6 @@ app.post('/send_url', (req, res) => {
       if (match) {
         const filePath = match[1].trim();
         filePaths.push(filePath);
-        downloadedFiles.push(filePath); // Store downloaded file paths
-        console.log(downloadedFiles);
       }
     });
 
