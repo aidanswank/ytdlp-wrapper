@@ -23,24 +23,29 @@ socket.onmessage = (event) => {
         const status = document.getElementById('status'); // Assume a textarea with this ID exists
         status.innerHTML = data.message;
     } else if (data.type === 'downloadLink') {
-        const linkContainer = document.getElementById('downloadLink');
-        if (linkContainer) {
+        const listContainer = document.getElementById('downloadList');
+        if (listContainer) {
+            // Create the <li> element
+            const listItem = document.createElement('li');
+            
             // Create the <a> element dynamically
             const anchor = document.createElement('a');
             anchor.href = data.url; // Set the href property
-            anchor.textContent = data.filename; // Set the text content
+            anchor.textContent = "Download File " + data.filename; // Set the text content
             anchor.style.display = "inline"; // Ensure it's visible
         
-            // Append the <a> to the <p>
-            linkContainer.appendChild(anchor);
+            // Append the <a> to the <li>
+            listItem.appendChild(anchor);
         
             // Add the additional text
             const message = document.createTextNode(" File will be deleted in 5 minutes.");
-            linkContainer.appendChild(message);
-        } else {
-            console.error("Element with ID 'downloadLink' not found.");
-        }
+            listItem.appendChild(message);
         
+            // Append the <li> to the <ul>
+            listContainer.appendChild(listItem);
+        } else {
+            console.error("Element with ID 'downloadList' not found.");
+        }
     }
 };
 
