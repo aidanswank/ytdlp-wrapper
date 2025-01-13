@@ -22,6 +22,21 @@ app.get('/', (req, res) => {
 // Map to store client WebSocket connections
 let clients = new Map(); 
 
+// Function to schedule file deletion
+function scheduleFileDeletion(filePath) {
+    console.log(`Scheduling deletion of: ${filePath} in 5 minutes.`);
+    
+    setTimeout(() => {
+        fs.unlink(filePath, (err) => {
+            if (err) {
+                console.error(`Error deleting file ${filePath}:`, err);
+            } else {
+                console.log(`File deleted: ${filePath}`);
+            }
+        });
+    }, 1 * 60 * 1000); // 5 minutes
+}
+
 wss.on('connection', (ws) => {
     const clientId = uuidv4();  // Generate a new unique ID for each connection
     console.log("Client connected", clientId);
@@ -85,7 +100,7 @@ wss.on('connection', (ws) => {
     
             process.on('close', (code) => {
                 console.log(`Process exited with code: ${code}`);
-                
+
                 if (code !== 0) {
                     console.error(`Error: Download failed with exit code ${code}. Skipping ZIP creation.`);
                     if (clientId && clients.has(clientId)) {
@@ -107,6 +122,8 @@ wss.on('connection', (ws) => {
                     output.on('close', () => {
                         console.log(`ZIP file created: ${zipFilePath}`);
                         ws.send(JSON.stringify({ type: 'downloadLink', url: `/downloads/${path.basename(zipFilePath)}`, filename: path.basename(zipFilePath) }));
+
+                        scheduleFileDeletion(zipFilePath);
                     });
     
                     archive.on('error', (err) => {
@@ -116,6 +133,8 @@ wss.on('connection', (ws) => {
                     // Add files to the zip archive
                     clients.get(clientId).inprogressDownloads.forEach((file) => {
                         archive.file(file, { name: path.basename(file) });
+
+                        scheduleFileDeletion(file);
                     });
     
                     archive.pipe(output);
