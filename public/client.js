@@ -1,6 +1,8 @@
 console.log("hello");
 
-const socket = new WebSocket('ws://127.0.0.1:3000');
+const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+const socketUrl = `${protocol}://${window.location.host}`;
+const socket = new WebSocket(socketUrl);
 
 socket.onopen = () => {
     console.log('Connected to the WebSocket server');
@@ -18,6 +20,8 @@ socket.onmessage = (event) => {
         textarea.scrollTop = textarea.scrollHeight; // Auto-scroll to the bottom
     } else if (data.type === 'downloadStatus') {
         console.log('Status:', data.message);
+        const status = document.getElementById('status'); // Assume a textarea with this ID exists
+        status.innerHTML = data.message;
     } else if (data.type === 'downloadLink') {
         const linkElement = document.getElementById('downloadLink');
         if (linkElement) {

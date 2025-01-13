@@ -86,7 +86,7 @@ wss.on('connection', (ws) => {
             process.on('close', (code) => {
                 console.log(`Process exited with code: ${code}`);
                 if (clients.has(clientId)) {
-                    ws.send(JSON.stringify({ type: 'downloadStatus', message: 'Download complete!' }));
+                    ws.send(JSON.stringify({ type: 'downloadStatus', message: 'Download complete! Zipping please wait...' }));
     
                     // Create a ZIP file of the downloaded files using the song/playlist name
                     const timestamp = new Date().toISOString().replace(/[:.-]/g, "_");
