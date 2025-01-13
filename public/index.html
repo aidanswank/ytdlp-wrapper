@@ -5,7 +5,7 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>ytdlp wrapper</title>
-	<script src="https://unpkg.com/htmx.org@1.9.6"></script>
+	<link rel="stylesheet" href="style.css">
 </head>
 
 <body>
@@ -16,7 +16,7 @@
 	
 		<label for="format">Format</label>
 		<select id="format" name="format">
-		  <option value="video">Video</option>
+		  <option value="video">Default/Video</option>
 		  <option value="wav">Audio (WAV)</option>
 		  <option value="mp3">Audio (MP3)</option>
 		</select>
@@ -26,7 +26,8 @@
 	<textarea id="logs" rows="10" cols="80" readonly></textarea>
 	<p id="status"></p>
 	<ul id="downloadList"></ul>
-	<script src="/socket.io/socket.io.js"></script>
 	<script src="client.js"></script>
+
+</body>
 
 </html>

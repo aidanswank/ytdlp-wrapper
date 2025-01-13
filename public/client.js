@@ -60,6 +60,8 @@ document.getElementById('downloadForm').addEventListener('submit', (event) => {
     // Extract data from the form
     const url = document.getElementById('url').value;
     const format = document.getElementById('format').value;
+    const status = document.getElementById('status');
+    status.innerHTML = '';
 
     socket.send(JSON.stringify({
         type: 'downloadRequest',

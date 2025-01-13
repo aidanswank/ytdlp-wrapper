@@ -13,3 +13,7 @@ nvm install v18.17.0
 sudo apt-get update && sudo apt-get install -y yt-dlp
 
 sudo apt-get install -y npm
+
+sudo npm i -g forever
+
+mkdir logs
