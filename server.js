@@ -85,6 +85,15 @@ wss.on('connection', (ws) => {
     
             process.on('close', (code) => {
                 console.log(`Process exited with code: ${code}`);
+                
+                if (code !== 0) {
+                    console.error(`Error: Download failed with exit code ${code}. Skipping ZIP creation.`);
+                    if (clientId && clients.has(clientId)) {
+                        ws.send(JSON.stringify({ type: 'error', message: 'Download failed. Please try again.' }));
+                    }
+                    return; // Exit early to skip further steps
+                }
+            
                 if (clients.has(clientId)) {
                     ws.send(JSON.stringify({ type: 'downloadStatus', message: 'Download complete! Zipping please wait...' }));
     
