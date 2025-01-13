@@ -34,7 +34,7 @@ function scheduleFileDeletion(filePath) {
                 console.log(`File deleted: ${filePath}`);
             }
         });
-    }, 1 * 60 * 1000); // 5 minutes
+    }, 5 * 60 * 1000); // 5 minutes
 }
 
 wss.on('connection', (ws) => {

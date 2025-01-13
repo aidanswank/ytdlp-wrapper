@@ -38,7 +38,7 @@ socket.onmessage = (event) => {
             listItem.appendChild(anchor);
         
             // Add the additional text
-            const message = document.createTextNode(" File will be deleted in 5 minutes.");
+            const message = document.createTextNode(" File will be deleted in a few minutes.");
             listItem.appendChild(message);
         
             // Append the <li> to the <ul>
