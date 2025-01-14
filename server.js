@@ -63,7 +63,7 @@ wss.on('connection', (ws) => {
                 otherOptions = '--extract-audio --audio-format mp3';
             }
     
-            const command = `yt-dlp ${otherOptions} "${url}" -o "./public/downloads/%(title)s.%(ext)s"`;
+            const command = `yt-dlp ${otherOptions} --cookies "../cookies.txt" "${url}" -o "./public/downloads/%(title)s.%(ext)s"`;
             console.log('Full command:', command);
     
             const process = exec(command);
